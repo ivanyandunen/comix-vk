@@ -8,7 +8,7 @@ load_dotenv()
 
 def download_image(url):
     image_link = requests.get(url)
-    with open('filename.png', 'wb') as file:
+    with open('comix.png', 'wb') as file:
         file.write(image_link.content)
 
 
@@ -44,13 +44,13 @@ def save_image_to_album(filename, access_token):
     return response.json()
 
 
-def publish_image(filename, access_token, title, comment):
+def publish_image(filename, access_token, group_id, title, comment):
     image_data = save_image_to_album(filename, access_token)
     media_id = image_data['response'][0]['id']
     owner_id = image_data['response'][0]['owner_id']
     url = 'https://api.vk.com/method/wall.post'
     payload = {
-        'owner_id': '-189173009',
+        'owner_id': group_id,
         'from_group': '1',
         'message': f'{title}\n{comment}',
         'attachments': f'photo{owner_id}_{media_id}',
@@ -58,17 +58,21 @@ def publish_image(filename, access_token, title, comment):
         'v': '5.103'
         }
     response = requests.get(url, params=payload)
-    print(response)
 
 
 if __name__ == '__main__':
-    content = requests.get('http://xkcd.com/353/info.0.json').json()
+    max_page = requests.get('http://xkcd.com/info.0.json').json()['num']
+    page = random.randint(1, max_page)
+    content = requests.get(f'http://xkcd.com/{page}/info.0.json').json()
     download_image(content['img'])
 
     access_token = os.getenv('AccessToken')
+    group_id = os.getenv('GroupID')
     publish_image(
-        'filename.png',
+        'comix.png',
         access_token,
+        group_id,
         content['title'],
         content['alt']
         )
+    os.remove('comix.png')
