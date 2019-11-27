@@ -3,11 +3,10 @@ import os
 from dotenv import load_dotenv
 import random
 
-load_dotenv()
-
 
 def download_image(url):
     image_link = requests.get(url)
+    image_link.raise_for_status()
     with open('comix.png', 'wb') as file:
         file.write(image_link.content)
 
@@ -19,6 +18,8 @@ def get_url_for_upload_image(access_token):
         'v': '5.103'
         }
     response = requests.get(url, payload)
+    if 'error' in response.json():
+        raise requests.exceptions.HTTPError(response.json()['error'])
     return response.json()['response']['upload_url']
 
 
@@ -27,6 +28,8 @@ def upload_file_to_server(filename, access_token):
         url = get_url_for_upload_image(access_token)
         files = {'photo': file}
         response = requests.post(url, files=files)
+        if 'error' in response.json():
+            raise requests.exceptions.HTTPError(response.json()['error'])
     return response.json()
 
 
@@ -41,6 +44,8 @@ def save_image_to_album(filename, access_token):
         'v': '5.103'
         }
     response = requests.post(url, payload)
+    if 'error' in response.json():
+        raise requests.exceptions.HTTPError(response.json()['error'])
     return response.json()
 
 
@@ -58,21 +63,30 @@ def publish_image(filename, access_token, group_id, title, comment):
         'v': '5.103'
         }
     response = requests.get(url, params=payload)
+    if 'error' in response.json():
+        raise requests.exceptions.HTTPError(response.json()['error'])
+
+
+def get_random_comix():
+    response = requests.get('http://xkcd.com/info.0.json')
+    response.raise_for_status()
+    page = random.randint(1, response.json()['num'])
+    content = requests.get(f'http://xkcd.com/{page}/info.0.json')
+    content.raise_for_status()
+    return content.json()
 
 
 if __name__ == '__main__':
-    max_page = requests.get('http://xkcd.com/info.0.json').json()['num']
-    page = random.randint(1, max_page)
-    content = requests.get(f'http://xkcd.com/{page}/info.0.json').json()
-    download_image(content['img'])
-
+    load_dotenv()
+    comix = get_random_comix()
+    download_image(comix['img'])
     access_token = os.getenv('AccessToken')
     group_id = os.getenv('GroupID')
     publish_image(
         'comix.png',
         access_token,
         group_id,
-        content['title'],
-        content['alt']
+        comix['title'],
+        comix['alt']
         )
     os.remove('comix.png')
