@@ -17,20 +17,20 @@ def get_url_for_upload_image(access_token):
         'access_token': access_token,
         'v': '5.103'
         }
-    response = requests.get(url, payload)
-    if 'error' in response.json():
-        raise requests.exceptions.HTTPError(response.json()['error'])
-    return response.json()['response']['upload_url']
+    response = requests.get(url, payload).json()
+    if 'error' in response:
+        raise requests.exceptions.HTTPError(response['error'])
+    return response['response']['upload_url']
 
 
 def upload_file_to_server(filename, access_token):
     with open(filename, 'rb') as file:
         url = get_url_for_upload_image(access_token)
         files = {'photo': file}
-        response = requests.post(url, files=files)
-        if 'error' in response.json():
-            raise requests.exceptions.HTTPError(response.json()['error'])
-    return response.json()
+        response = requests.post(url, files=files).json()
+        if 'error' in response:
+            raise requests.exceptions.HTTPError(response['error'])
+    return response
 
 
 def save_image_to_album(filename, access_token):
@@ -43,10 +43,10 @@ def save_image_to_album(filename, access_token):
         'access_token': access_token,
         'v': '5.103'
         }
-    response = requests.post(url, payload)
-    if 'error' in response.json():
-        raise requests.exceptions.HTTPError(response.json()['error'])
-    return response.json()
+    response = requests.post(url, payload).json()
+    if 'error' in response:
+        raise requests.exceptions.HTTPError(response['error'])
+    return response
 
 
 def publish_image(filename, access_token, group_id, title, comment):
@@ -62,9 +62,9 @@ def publish_image(filename, access_token, group_id, title, comment):
         'access_token': access_token,
         'v': '5.103'
         }
-    response = requests.get(url, params=payload)
-    if 'error' in response.json():
-        raise requests.exceptions.HTTPError(response.json()['error'])
+    response = requests.get(url, params=payload).json()
+    if 'error' in response:
+        raise requests.exceptions.HTTPError(response['error'])
 
 
 def get_random_comix():
